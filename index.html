@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Busca CEP - Funcional</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .resultado {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            display: none;
+        }
+        .resultado p {
+            margin: 10px 0;
+            padding: 5px;
+            border-bottom: 1px solid #ddd;
+        }
+        .erro {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            display: none;
+        }
+        .loading {
+            text-align: center;
+            margin-top: 10px;
+            display: none;
+            color: #666;
+        }
+        .info {
+            text-align: center;
+            margin-top: 10px;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Busca CEP</h1>
+        <p>Digite um CEP para encontrar o endereço:</p>
+        
+        <input type="text" id="cep" placeholder="Ex: 01001-000" maxlength="9">
+        <button onclick="buscarCEP()">Buscar Endereço</button>
+        
+        <div class="loading" id="loading">Buscando...</div>
+        
+        <div class="erro" id="erro">
+            CEP não encontrado! Digite um CEP válido.
+        </div>
+        
+        <div class="resultado" id="resultado">
+            <h3>📋 Endereço Encontrado:</h3>
+            <p><strong>Logradouro:</strong> <span id="logradouro">-</span></p>
+            <p><strong>Bairro:</strong> <span id="bairro">-</span></p>
+            <p><strong>Cidade:</strong> <span id="cidade">-</span></p>
+            <p><strong>Estado:</strong> <span id="estado">-</span></p>
+            <p><strong>CEP:</strong> <span id="cepResult">-</span></p>
+        </div>
+        
+        <div class="info">
+            <p>Dados fornecidos por <a href="https://viacep.com.br" target="_blank">ViaCEP</a></p>
+            <p>CEPs para teste: 01001-000, 20040-020, 30140-071</p>
+        </div>
+    </div>
+
+    <script>
+        function buscarCEP() {
+            // Pega o valor do input
+            let cep = document.getElementById('cep').value;
+            
+            // Remove caracteres não numéricos
+            cep = cep.replace(/\D/g, '');
+            
+            // Validação básica
+            if (cep.length !== 8) {
+                alert('Digite um CEP válido com 8 números!');
+                return;
+            }
+            
+            // Mostra loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('resultado').style.display = 'none';
+            document.getElementById('erro').style.display = 'none';
+            
+            // Faz a requisição para a API ViaCEP
+            fetch(`https://viacep.com.br/ws/${cep}/json/`)
+                .then(response => response.json())
+                .then(data => {
+                    // Esconde loading
+                    document.getElementById('loading').style.display = 'none';
+                    
+                    // Verifica se retornou erro
+                    if (data.erro) {
+                        document.getElementById('erro').style.display = 'block';
+                        document.getElementById('resultado').style.display = 'none';
+                        return;
+                    }
+                    
+                    // Preenche os dados
+                    document.getElementById('logradouro').textContent = data.logradouro || 'Não informado';
+                    document.getElementById('bairro').textContent = data.bairro || 'Não informado';
+                    document.getElementById('cidade').textContent = data.localidade || 'Não informado';
+                    document.getElementById('estado').textContent = data.uf || 'Não informado';
+                    document.getElementById('cepResult').textContent = data.cep || cep;
+                    
+                    // Mostra o resultado
+                    document.getElementById('resultado').style.display = 'block';
+                })
+                .catch(error => {
+                    // Esconde loading e mostra erro
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('erro').style.display = 'block';
+                    console.error('Erro:', error);
+                });
+        }
+
+        // Permite buscar com Enter
+        document.getElementById('cep').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                buscarCEP();
+            }
+        });
+
+        // Formata o CEP enquanto digita
+        document.getElementById('cep').addEventListener('input', function(e) {
+            let cep = e.target.value.replace(/\D/g, '');
+            if (cep.length > 5) {
+                cep = cep.substring(0, 5) + '-' + cep.substring(5, 8);
+            }
+            e.target.value = cep;
+        });
+    </script>
+</body>
+</html>
